@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity } from "lucide-react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
+import { ativarBloqueio } from "@/plugins/CallRolePlugin";
+import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,23 @@ export default function Index() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
+        {/* Ativar bloqueio */}
+        <Button
+          variant="outline"
+          className="mb-4 w-full gap-2"
+          onClick={async () => {
+            try {
+              await ativarBloqueio();
+              toast.success("Permissão de bloqueio solicitada!");
+            } catch {
+              toast.error("Não foi possível solicitar a permissão.");
+            }
+          }}
+        >
+          <Shield className="h-4 w-4" />
+          Ativar Bloqueio de Chamadas
+        </Button>
+
         {/* Stats */}
         <div className="mb-6 grid grid-cols-3 gap-3">
           <StatCard icon={<PhoneOff className="h-4 w-4" />} value={rules.length} label="Regras" />
