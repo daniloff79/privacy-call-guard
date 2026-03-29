@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity } from "lucide-react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
+import { ativarBloqueio } from "@/plugins/CallRolePlugin";
+import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
 import { Button } from "@/components/ui/button";
