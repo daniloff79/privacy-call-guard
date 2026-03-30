@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
+import { useCallLog } from "@/hooks/useCallLog";
 import { ativarBloqueio } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
+import CallLogSection from "@/components/CallLogSection";
 import { Button } from "@/components/ui/button";
 
 export default function Index() {
   const { rules, addRule, toggleRule, deleteRule } = useBlockingRules();
+  const { log, clearLog } = useCallLog();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const activeCount = rules.filter((r) => r.enabled).length;
