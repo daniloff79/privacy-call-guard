@@ -82,6 +82,9 @@ export default function Index() {
             ))}
           </div>
         )}
+
+        {/* Call Log */}
+        <CallLogSection log={log} onClear={clearLog} />
       </main>
 
       {/* FAB */}
