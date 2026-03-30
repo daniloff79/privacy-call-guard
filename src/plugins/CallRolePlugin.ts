@@ -1,17 +1,19 @@
 import { registerPlugin } from '@capacitor/core';
 
+// Define a interface para o TypeScript não reclamar
 interface CallRolePlugin {
-  requestCallRole(): Promise<void>;
+  requestCallRole(): Promise<{ status: string }>;
 }
 
 const CallRole = registerPlugin<CallRolePlugin>('CallRole');
 
-export async function ativarBloqueio() {
+export const ativarBloqueio = async () => {
   try {
-    await CallRole.requestCallRole();
-    console.log("Solicitação enviada ao sistema");
+    const result = await CallRole.requestCallRole();
+    console.log("Status da permissão:", result.status);
   } catch (e) {
-    console.error("Erro ao solicitar papel de bloqueador:", e);
-    throw e;
+    // É aqui que está dando o erro "Não foi possível solicitar..."
+    console.error("Erro detalhado:", e);
+    alert("Erro ao solicitar: " + (e.message || "Verifique o Logcat no Android Studio"));
   }
-}
+};
