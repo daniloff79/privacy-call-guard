@@ -17,34 +17,28 @@ public class CallRolePlugin extends Plugin {
 
     @PluginMethod
     public void requestCallRole(PluginCall call) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roleManager = getContext().getSystemService(RoleManager.class);
+            
+            if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
+                if (!roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
+                    Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
+                    startActivityForResult(call, intent, "handleRoleResult");
+                } else {
+                    JSObject ret = new JSObject();
+                    ret.put("status", "already_held");
+                    call.resolve(ret);
+                }
+            } else {
+                call.reject("Papel de Call Screening não disponível neste dispositivo.");
+            }
+        } else {
             call.reject("Versão do Android incompatível (Requer Android 10+).");
-            return;
         }
-
-        RoleManager roleManager = getContext().getSystemService(RoleManager.class);
-        if (roleManager == null || !roleManager.isRoleAvailable(RoleManager.ROLE_CALL_SCREENING)) {
-            call.reject("Papel de Call Screening não disponível neste dispositivo.");
-            return;
-        }
-
-        if (roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)) {
-            JSObject ret = new JSObject();
-            ret.put("status", "already_held");
-            call.resolve(ret);
-            return;
-        }
-
-        Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING);
-        startActivityForResult(call, intent, "handleRoleResult");
     }
 
     @ActivityCallback
     private void handleRoleResult(PluginCall call, ActivityResult result) {
-        if (call == null) {
-            return;
-        }
-
         if (result.getResultCode() == Activity.RESULT_OK) {
             JSObject ret = new JSObject();
             ret.put("status", "granted");
