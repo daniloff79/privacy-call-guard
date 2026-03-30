@@ -36,10 +36,19 @@ export default function Index() {
           className="mb-4 w-full gap-2"
           onClick={async () => {
             try {
-              await ativarBloqueio();
-              toast.success("Permissão de bloqueio solicitada!");
-            } catch {
-              toast.error("Não foi possível solicitar a permissão.");
+              const status = await ativarBloqueio();
+              if (status === 'already_held') {
+                toast.info("O app já é o bloqueador de chamadas padrão.");
+              } else {
+                toast.success("Permissão de bloqueio concedida!");
+              }
+            } catch (e: any) {
+              const msg = e?.message || String(e);
+              if (msg.includes('not implemented')) {
+                toast.error("Plugin indisponível. Execute no dispositivo Android.");
+              } else {
+                toast.error("Permissão negada: " + msg);
+              }
             }
           }}
         >
