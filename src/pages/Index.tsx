@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
+import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
 import { ativarBloqueio } from "@/plugins/CallRolePlugin";
@@ -22,9 +23,7 @@ export default function Index() {
       {/* Header */}
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <ShieldCheck className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <img src={iconSvg} alt="CallShield" className="h-10 w-10 rounded-xl" />
           <div>
             <h1 className="text-lg font-bold text-card-foreground">CallShield</h1>
             <p className="text-sm text-muted-foreground">Bloqueio de chamadas com privacidade</p>
