@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, PhoneOff, Activity, Shield } from "lucide-react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
