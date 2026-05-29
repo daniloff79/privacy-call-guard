@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2 } from "lucide-react";
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { ativarBloqueio } from "@/plugins/CallRolePlugin";
+import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
@@ -14,6 +14,21 @@ export default function Index() {
   const { rules, addRule, toggleRule, deleteRule } = useBlockingRules();
   const { log, clearLog } = useCallLog();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const check = async () => {
+      const v = await isAppPadraoBloqueio();
+      if (active) setIsDefault(v);
+    };
+    check();
+    const id = window.setInterval(check, 4000);
+    return () => {
+      active = false;
+      window.clearInterval(id);
+    };
+  }, []);
 
   const activeCount = rules.filter((r) => r.enabled).length;
   const wildcardCount = rules.filter((r) => r.pattern.includes("*")).length;
@@ -32,31 +47,46 @@ export default function Index() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
-        {/* Ativar bloqueio */}
-        <Button
-          variant="outline"
-          className="mb-4 w-full gap-2"
-          onClick={async () => {
-            try {
-              const status = await ativarBloqueio();
-              if (status === 'already_held') {
-                toast.info("O app já é o bloqueador de chamadas padrão.");
-              } else {
-                toast.success("Permissão de bloqueio concedida!");
+        {/* Status + escolher app padrão */}
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            {isDefault ? (
+              <>
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                <div>
+                  <p className="text-sm font-medium text-card-foreground">CallShield é o app de bloqueio padrão</p>
+                  <p className="text-xs text-muted-foreground">Toque ao lado para trocar o app responsável.</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-card-foreground">Escolha o app de bloqueio</p>
+                  <p className="text-xs text-muted-foreground">Defina qual app fará a triagem das chamadas.</p>
+                </div>
+              </>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={async () => {
+              try {
+                if (!isNative()) {
+                  toast.error("Disponível apenas no Android.");
+                  return;
+                }
+                await abrirEscolhaAppBloqueio();
+              } catch (e: any) {
+                toast.error("Não foi possível abrir as configurações: " + (e?.message || e));
               }
-            } catch (e: any) {
-              const msg = e?.message || String(e);
-              if (msg.includes('not implemented')) {
-                toast.error("Plugin indisponível. Execute no dispositivo Android.");
-              } else {
-                toast.error("Permissão negada: " + msg);
-              }
-            }
-          }}
-        >
-          <Shield className="h-4 w-4" />
-          Ativar Bloqueio de Chamadas
-        </Button>
+            }}
+          >
+            <SettingsIcon className="h-4 w-4" />
+            {isDefault ? "Trocar app" : "Escolher app"}
+          </Button>
+        </div>
 
         {/* Stats */}
         <div className="mb-6 grid grid-cols-3 gap-3">

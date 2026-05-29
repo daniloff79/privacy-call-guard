@@ -1,23 +1,68 @@
-import { registerPlugin } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
+
+export interface NativeLogEntry {
+  id: string;
+  number: string;
+  matchedRule: string;
+  blockedAt: string;
+}
 
 interface CallRolePlugin {
   requestCallRole(): Promise<{ status: 'granted' | 'already_held' }>;
+  openDefaultAppsSettings(): Promise<void>;
+  isDefaultCallScreeningApp(): Promise<{ isDefault: boolean }>;
+  syncRules(options: { rules: Array<{ pattern: string; label: string; enabled: boolean }> }): Promise<void>;
+  getBlockedLog(): Promise<{ log: NativeLogEntry[] }>;
+  clearBlockedLog(): Promise<void>;
 }
 
 const CallRole = registerPlugin<CallRolePlugin>('CallRole');
 
+export const isNative = () => Capacitor.getPlatform() === 'android';
+
 export const ativarBloqueio = async (): Promise<string> => {
+  const result = await CallRole.requestCallRole();
+  return result.status;
+};
+
+export const abrirEscolhaAppBloqueio = async (): Promise<void> => {
+  await CallRole.openDefaultAppsSettings();
+};
+
+export const isAppPadraoBloqueio = async (): Promise<boolean> => {
+  if (!isNative()) return false;
   try {
-    const result = await CallRole.requestCallRole();
-    console.log('[CallRole] Status retornado:', result.status);
-    return result.status;
-  } catch (e: any) {
-    const msg = e?.message || String(e);
-    if (msg.includes('not implemented')) {
-      console.error('[CallRole] Plugin não encontrado. Verifique se o app está rodando no Android e se registerPlugin(CallRolePlugin.class) está no MainActivity.', e);
-    } else {
-      console.error('[CallRole] Erro ao solicitar papel:', msg, e);
-    }
-    throw e;
+    const { isDefault } = await CallRole.isDefaultCallScreeningApp();
+    return isDefault;
+  } catch {
+    return false;
   }
+};
+
+export const syncRulesNative = async (
+  rules: Array<{ pattern: string; label: string; enabled: boolean }>
+): Promise<void> => {
+  if (!isNative()) return;
+  try {
+    await CallRole.syncRules({ rules });
+  } catch (e) {
+    console.warn('[CallRole] syncRules falhou:', e);
+  }
+};
+
+export const getNativeLog = async (): Promise<NativeLogEntry[]> => {
+  if (!isNative()) return [];
+  try {
+    const { log } = await CallRole.getBlockedLog();
+    return log || [];
+  } catch {
+    return [];
+  }
+};
+
+export const clearNativeLog = async (): Promise<void> => {
+  if (!isNative()) return;
+  try {
+    await CallRole.clearBlockedLog();
+  } catch {}
 };

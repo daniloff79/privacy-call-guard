@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { syncRulesNative } from "@/plugins/CallRolePlugin";
 
 export interface BlockingRule {
   id: string;
@@ -22,10 +23,22 @@ function loadRules(): BlockingRule[] {
 
 function saveRules(rules: BlockingRule[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+  // Mantém o serviço nativo em sincronia
+  syncRulesNative(
+    rules.map((r) => ({ pattern: r.pattern, label: r.label, enabled: r.enabled }))
+  );
 }
 
 export function useBlockingRules() {
   const [rules, setRules] = useState<BlockingRule[]>(loadRules);
+
+  // Sincroniza com o serviço nativo na inicialização
+  useEffect(() => {
+    syncRulesNative(
+      rules.map((r) => ({ pattern: r.pattern, label: r.label, enabled: r.enabled }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addRule = useCallback((pattern: string, label: string) => {
     setRules((prev) => {
