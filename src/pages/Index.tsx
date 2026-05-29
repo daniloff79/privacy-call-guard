@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Index() {
   const { rules, addRule, toggleRule, deleteRule } = useBlockingRules();
-  const { log, clearLog, refresh } = useCallLog();
+  const { log, clearLog } = useCallLog();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
 
@@ -30,9 +30,6 @@ export default function Index() {
     };
   }, []);
 
-  const { log, clearLog } = useCallLog();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
   const activeCount = rules.filter((r) => r.enabled).length;
   const wildcardCount = rules.filter((r) => r.pattern.includes("*")).length;
 
@@ -46,9 +43,12 @@ export default function Index() {
             <h1 className="text-lg font-bold text-card-foreground">CallShield</h1>
             <p className="text-sm text-muted-foreground">Bloqueio de chamadas com privacidade</p>
           </div>
+        </div>
+      </header>
+
       <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
         {/* Status + escolher app padrão */}
-        <div className="mb-4 flex flex-col gap-2 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             {isDefault ? (
               <>
@@ -87,13 +87,6 @@ export default function Index() {
             {isDefault ? "Trocar app" : "Escolher app"}
           </Button>
         </div>
-
-            }
-          }}
-        >
-          <Shield className="h-4 w-4" />
-          Ativar Bloqueio de Chamadas
-        </Button>
 
         {/* Stats */}
         <div className="mb-6 grid grid-cols-3 gap-3">
