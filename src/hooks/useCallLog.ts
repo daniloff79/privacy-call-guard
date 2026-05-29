@@ -1,4 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { App } from "@capacitor/app";
+import { clearNativeLog, getNativeLog, isNative } from "@/plugins/CallRolePlugin";
 
 export interface CallLogEntry {
   id: string;
@@ -9,7 +11,7 @@ export interface CallLogEntry {
 
 const STORAGE_KEY = "call-log";
 
-function loadLog(): CallLogEntry[] {
+function loadLocal(): CallLogEntry[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -19,31 +21,40 @@ function loadLog(): CallLogEntry[] {
   }
 }
 
-function saveLog(log: CallLogEntry[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
-}
-
 export function useCallLog() {
-  const [log, setLog] = useState<CallLogEntry[]>(loadLog);
+  const [log, setLog] = useState<CallLogEntry[]>(loadLocal);
 
-  const addEntry = useCallback((number: string, matchedRule: string) => {
-    setLog((prev) => {
-      const entry: CallLogEntry = {
-        id: crypto.randomUUID(),
-        number,
-        matchedRule,
-        blockedAt: new Date().toISOString(),
-      };
-      const next = [entry, ...prev].slice(0, 100); // keep last 100
-      saveLog(next);
-      return next;
+  const refresh = useCallback(async () => {
+    if (isNative()) {
+      const native = await getNativeLog();
+      setLog(native);
+    } else {
+      setLog(loadLocal());
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    if (!isNative()) return;
+    // Atualiza ao voltar pro app (após uma chamada bloqueada)
+    const sub = App.addListener("appStateChange", ({ isActive }) => {
+      if (isActive) refresh();
     });
-  }, []);
+    const interval = window.setInterval(refresh, 5000);
+    return () => {
+      sub.then((h) => h.remove());
+      window.clearInterval(interval);
+    };
+  }, [refresh]);
 
-  const clearLog = useCallback(() => {
+  const clearLog = useCallback(async () => {
     setLog([]);
-    localStorage.removeItem(STORAGE_KEY);
+    if (isNative()) {
+      await clearNativeLog();
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }, []);
 
-  return { log, addEntry, clearLog };
+  return { log, clearLog, refresh };
 }
