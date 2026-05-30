@@ -17,17 +17,6 @@ interface CallRolePlugin {
   requestIgnoreBatteryOptimizations(): Promise<{ status: 'already_ignored' | 'requested' | 'unsupported' }>;
 }
 
-export const requestIgnoreBatteryOptimizations = async (): Promise<string> => {
-  if (!isNative()) return 'unsupported';
-  try {
-    const { status } = await CallRole.requestIgnoreBatteryOptimizations();
-    return status;
-  } catch {
-    return 'unsupported';
-  }
-};
-
-// dummy line to keep diff scoped
 
 const CallRole = registerPlugin<CallRolePlugin>('CallRole');
 
