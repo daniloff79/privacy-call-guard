@@ -114,9 +114,30 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
     }
 
     @PluginMethod
-    public void clearBlockedLog(PluginCall call) {
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
-        prefs.edit().remove(KEY_LOG).apply();
-        call.resolve();
+    public void requestIgnoreBatteryOptimizations(PluginCall call) {
+        JSObject ret = new JSObject();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Context ctx = getContext();
+                PowerManager pm = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
+                String pkg = ctx.getPackageName();
+                if (pm != null && pm.isIgnoringBatteryOptimizations(pkg)) {
+                    ret.put("status", "already_ignored");
+                    call.resolve(ret);
+                    return;
+                }
+                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + pkg));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                ctx.startActivity(intent);
+                ret.put("status", "requested");
+                call.resolve(ret);
+            } else {
+                ret.put("status", "unsupported");
+                call.resolve(ret);
+            }
+        } catch (Exception e) {
+            call.reject("Falha ao solicitar isenção de otimização: " + e.getMessage());
+        }
     }
 }
