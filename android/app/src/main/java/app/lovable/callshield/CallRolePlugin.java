@@ -86,7 +86,9 @@ public class CallRolePlugin extends Plugin {
     @PluginMethod
     public void syncRules(PluginCall call) {
         try {
-            JSONArray rules = call.getArray("rules", new JSONArray());
+            //JSONArray rules = call.getArray("rules", new JSONArray());
+			// O Capacitor espera um JSArray como valor padrão se a chave não existir
+com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSArray());
             SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
             prefs.edit().putString(KEY_RULES, rules.toString()).apply();
             call.resolve();

@@ -24,7 +24,9 @@ public class CallBlockerService extends CallScreeningService {
         } catch (Exception ignored) {}
         if (phoneNumber == null) phoneNumber = "";
 
-        SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+        //SharedPreferences prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+		// Altere para usar "this" em vez de "context", e use android.content.Context explicitamente se necessário
+		android.content.SharedPreferences prefs = this.getSharedPreferences("CapacitorStorage", android.content.Context.MODE_PRIVATE);
         String rulesJson = prefs.getString(KEY_RULES, "[]");
 
         String matchedLabel = null;
