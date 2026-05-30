@@ -3,7 +3,7 @@ import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckC
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative } from "@/plugins/CallRolePlugin";
+import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
@@ -28,6 +28,22 @@ export default function Index() {
       active = false;
       window.clearInterval(id);
     };
+  }, []);
+
+  // Solicita isenção de otimização de bateria e confirma whitelist de contatos
+  useEffect(() => {
+    if (!isNative()) return;
+    (async () => {
+      const status = await requestIgnoreBatteryOptimizations();
+      if (status === 'already_ignored') {
+        toast.success("Otimização de bateria já desativada para o CallShield.");
+      } else if (status === 'requested') {
+        toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
+      }
+      toast.success("Lista de contatos salva como whitelist.", {
+        description: "Apenas números salvos nos seus contatos poderão ligar.",
+      });
+    })();
   }, []);
 
   const activeCount = rules.filter((r) => r.enabled).length;

@@ -14,7 +14,9 @@ interface CallRolePlugin {
   syncRules(options: { rules: Array<{ pattern: string; label: string; enabled: boolean }> }): Promise<void>;
   getBlockedLog(): Promise<{ log: NativeLogEntry[] }>;
   clearBlockedLog(): Promise<void>;
+  requestIgnoreBatteryOptimizations(): Promise<{ status: 'already_ignored' | 'requested' | 'unsupported' }>;
 }
+
 
 const CallRole = registerPlugin<CallRolePlugin>('CallRole');
 
@@ -65,4 +67,14 @@ export const clearNativeLog = async (): Promise<void> => {
   try {
     await CallRole.clearBlockedLog();
   } catch {}
+};
+
+export const requestIgnoreBatteryOptimizations = async (): Promise<string> => {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { status } = await CallRole.requestIgnoreBatteryOptimizations();
+    return status;
+  } catch {
+    return 'unsupported';
+  }
 };
