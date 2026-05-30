@@ -68,3 +68,13 @@ export const clearNativeLog = async (): Promise<void> => {
     await CallRole.clearBlockedLog();
   } catch {}
 };
+
+export const requestIgnoreBatteryOptimizations = async (): Promise<string> => {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { status } = await CallRole.requestIgnoreBatteryOptimizations();
+    return status;
+  } catch {
+    return 'unsupported';
+  }
+};
