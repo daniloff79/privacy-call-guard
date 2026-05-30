@@ -114,6 +114,14 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
     }
 
     @PluginMethod
+    public void clearBlockedLog(PluginCall call) {
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
+        prefs.edit().remove(KEY_LOG).apply();
+        call.resolve();
+    }
+
+
+    @PluginMethod
     public void requestIgnoreBatteryOptimizations(PluginCall call) {
         JSObject ret = new JSObject();
         try {
