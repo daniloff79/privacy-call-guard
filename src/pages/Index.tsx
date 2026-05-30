@@ -30,6 +30,22 @@ export default function Index() {
     };
   }, []);
 
+  // Solicita isenção de otimização de bateria e confirma whitelist de contatos
+  useEffect(() => {
+    if (!isNative()) return;
+    (async () => {
+      const status = await requestIgnoreBatteryOptimizations();
+      if (status === 'already_ignored') {
+        toast.success("Otimização de bateria já desativada para o CallShield.");
+      } else if (status === 'requested') {
+        toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
+      }
+      toast.success("Lista de contatos salva como whitelist.", {
+        description: "Apenas números salvos nos seus contatos poderão ligar.",
+      });
+    })();
+  }, []);
+
   const activeCount = rules.filter((r) => r.enabled).length;
   const wildcardCount = rules.filter((r) => r.pattern.includes("*")).length;
 
