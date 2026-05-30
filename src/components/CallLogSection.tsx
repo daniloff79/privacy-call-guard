@@ -10,20 +10,7 @@ interface CallLogSectionProps {
 }
 
 export default function CallLogSection({ log, onClear }: CallLogSectionProps) {
-  if (log.length === 0) {
-    return (
-      <div className="mt-8">
-        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          Log de Chamadas Bloqueadas
-        </h2>
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-10 text-center">
-          <PhoneIncoming className="mb-2 h-8 w-8 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">Nenhuma chamada bloqueada ainda</p>
-        </div>
-      </div>
-    );
-  }
+  if (log.length === 0) return null;
 
   return (
     <div className="mt-8">
