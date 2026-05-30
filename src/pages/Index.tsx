@@ -3,7 +3,7 @@ import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckC
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative } from "@/plugins/CallRolePlugin";
+import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
