@@ -112,15 +112,7 @@ export default function Index() {
         </div>
 
         {/* Rule list */}
-        {rules.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed bg-card py-16 text-center">
-            <ShieldCheck className="mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p className="font-medium text-muted-foreground">Nenhuma regra cadastrada</p>
-            <p className="mt-1 text-sm text-muted-foreground/70">
-              Toque no botão <strong>+</strong> para adicionar sua primeira regra.
-            </p>
-          </div>
-        ) : (
+        {rules.length > 0 && (
           <div className="space-y-3">
             {rules.map((rule) => (
               <RuleItem key={rule.id} rule={rule} onToggle={toggleRule} onDelete={deleteRule} />
