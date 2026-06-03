@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2 } from "lucide-react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations } from "@/plugins/CallRolePlugin";
+import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations, checkRuntimePermissions, requestRuntimePermissions } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
