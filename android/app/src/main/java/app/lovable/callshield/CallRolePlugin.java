@@ -137,7 +137,42 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
                     ret.put("status", "already_ignored");
                     call.resolve(ret);
                     return;
-                }
+
+
+    @PluginMethod
+    public void checkRuntimePermissions(PluginCall call) {
+        Context ctx = getContext();
+        boolean contacts = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean callLog = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALL_LOG)
+                == PackageManager.PERMISSION_GRANTED;
+        JSObject ret = new JSObject();
+        ret.put("contacts", contacts);
+        ret.put("callLog", callLog);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void requestRuntimePermissions(PluginCall call) {
+        try {
+            Activity activity = getActivity();
+            if (activity == null) {
+                call.reject("Activity indisponível");
+                return;
+            }
+            String[] perms = new String[] {
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.READ_CALL_LOG
+            };
+            ActivityCompat.requestPermissions(activity, perms, 7421);
+            JSObject ret = new JSObject();
+            ret.put("status", "requested");
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Falha ao solicitar permissões: " + e.getMessage());
+        }
+    }
+}
                 Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                 intent.setData(Uri.parse("package:" + pkg));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
