@@ -76,6 +76,30 @@ export default function Index() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
+        {/* Aviso de permissões */}
+        {isNative() && (!perms.contacts || !perms.callLog) && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-card-foreground">Permissões necessárias</p>
+              <p className="text-xs text-muted-foreground">
+                Sem acesso a {!perms.contacts && "Contatos"}{!perms.contacts && !perms.callLog && " e "}{!perms.callLog && "Registro de Chamadas"} o bloqueio pode não funcionar corretamente.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={async () => {
+                  await requestRuntimePermissions();
+                  setTimeout(async () => setPerms(await checkRuntimePermissions()), 1200);
+                }}
+              >
+                Conceder permissões
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Status + escolher app padrão */}
         <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
