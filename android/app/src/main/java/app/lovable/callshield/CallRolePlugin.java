@@ -1,15 +1,19 @@
 package app.lovable.callshield;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.role.RoleManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.PowerManager;
 import android.provider.Settings;
 import androidx.activity.result.ActivityResult;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -89,10 +93,8 @@ public class CallRolePlugin extends Plugin {
     @PluginMethod
     public void syncRules(PluginCall call) {
         try {
-            //JSONArray rules = call.getArray("rules", new JSONArray());
-			// O Capacitor espera um JSArray como valor padrão se a chave não existir
-com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSArray());
-            SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
+            com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSArray());
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             prefs.edit().putString(KEY_RULES, rules.toString()).apply();
             call.resolve();
         } catch (Exception e) {
@@ -103,7 +105,7 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
     @PluginMethod
     public void getBlockedLog(PluginCall call) {
         try {
-            SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
+            SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             String log = prefs.getString(KEY_LOG, "[]");
             JSObject ret = new JSObject();
             ret.put("log", new JSONArray(log));
@@ -115,11 +117,10 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
 
     @PluginMethod
     public void clearBlockedLog(PluginCall call) {
-        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE);
+        SharedPreferences prefs = getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         prefs.edit().remove(KEY_LOG).apply();
         call.resolve();
     }
-
 
     @PluginMethod
     public void requestIgnoreBatteryOptimizations(PluginCall call) {
@@ -146,6 +147,40 @@ com.getcapacitor.JSArray rules = call.getArray("rules", new com.getcapacitor.JSA
             }
         } catch (Exception e) {
             call.reject("Falha ao solicitar isenção de otimização: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void checkRuntimePermissions(PluginCall call) {
+        Context ctx = getContext();
+        boolean contacts = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS)
+                == PackageManager.PERMISSION_GRANTED;
+        boolean callLog = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALL_LOG)
+                == PackageManager.PERMISSION_GRANTED;
+        JSObject ret = new JSObject();
+        ret.put("contacts", contacts);
+        ret.put("callLog", callLog);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void requestRuntimePermissions(PluginCall call) {
+        try {
+            Activity activity = getActivity();
+            if (activity == null) {
+                call.reject("Activity indisponível");
+                return;
+            }
+            String[] perms = new String[] {
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.READ_CALL_LOG
+            };
+            ActivityCompat.requestPermissions(activity, perms, 7421);
+            JSObject ret = new JSObject();
+            ret.put("status", "requested");
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Falha ao solicitar permissões: " + e.getMessage());
         }
     }
 }

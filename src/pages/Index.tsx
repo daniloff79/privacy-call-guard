@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2 } from "lucide-react";
+import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import iconSvg from "@/assets/icon.svg";
 import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations } from "@/plugins/CallRolePlugin";
+import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations, checkRuntimePermissions, requestRuntimePermissions } from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
 import RuleItem from "@/components/RuleItem";
 import AddRuleDialog from "@/components/AddRuleDialog";
@@ -15,6 +15,7 @@ export default function Index() {
   const { log, clearLog } = useCallLog();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
+  const [perms, setPerms] = useState<{ contacts: boolean; callLog: boolean }>({ contacts: true, callLog: true });
 
   useEffect(() => {
     let active = true;
@@ -30,18 +31,30 @@ export default function Index() {
     };
   }, []);
 
-  // Solicita isenção de otimização de bateria e confirma whitelist de contatos
+  // Solicita permissões, isenção de bateria e confirma whitelist de contatos
   useEffect(() => {
     if (!isNative()) return;
     (async () => {
+      // 1) Permissões em tempo de execução
+      let p = await checkRuntimePermissions();
+      if (!p.contacts || !p.callLog) {
+        await requestRuntimePermissions();
+        // pequena espera para o usuário responder o diálogo
+        await new Promise((r) => setTimeout(r, 1500));
+        p = await checkRuntimePermissions();
+      }
+      setPerms(p);
+
+      // 2) Isenção de bateria
       const status = await requestIgnoreBatteryOptimizations();
       if (status === 'already_ignored') {
         toast.success("Otimização de bateria já desativada para o CallShield.");
       } else if (status === 'requested') {
         toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
       }
+
       toast.success("Lista de contatos salva como whitelist.", {
-        description: "Apenas números salvos nos seus contatos poderão ligar.",
+        description: "Apenas contatos e números de utilidade pública poderão ligar.",
       });
     })();
   }, []);
@@ -63,6 +76,30 @@ export default function Index() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
+        {/* Aviso de permissões */}
+        {isNative() && (!perms.contacts || !perms.callLog) && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-card-foreground">Permissões necessárias</p>
+              <p className="text-xs text-muted-foreground">
+                Sem acesso a {!perms.contacts && "Contatos"}{!perms.contacts && !perms.callLog && " e "}{!perms.callLog && "Registro de Chamadas"} o bloqueio pode não funcionar corretamente.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={async () => {
+                  await requestRuntimePermissions();
+                  setTimeout(async () => setPerms(await checkRuntimePermissions()), 1200);
+                }}
+              >
+                Conceder permissões
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Status + escolher app padrão */}
         <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
