@@ -31,18 +31,30 @@ export default function Index() {
     };
   }, []);
 
-  // Solicita isenção de otimização de bateria e confirma whitelist de contatos
+  // Solicita permissões, isenção de bateria e confirma whitelist de contatos
   useEffect(() => {
     if (!isNative()) return;
     (async () => {
+      // 1) Permissões em tempo de execução
+      let p = await checkRuntimePermissions();
+      if (!p.contacts || !p.callLog) {
+        await requestRuntimePermissions();
+        // pequena espera para o usuário responder o diálogo
+        await new Promise((r) => setTimeout(r, 1500));
+        p = await checkRuntimePermissions();
+      }
+      setPerms(p);
+
+      // 2) Isenção de bateria
       const status = await requestIgnoreBatteryOptimizations();
       if (status === 'already_ignored') {
         toast.success("Otimização de bateria já desativada para o CallShield.");
       } else if (status === 'requested') {
         toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
       }
+
       toast.success("Lista de contatos salva como whitelist.", {
-        description: "Apenas números salvos nos seus contatos poderão ligar.",
+        description: "Apenas contatos e números de utilidade pública poderão ligar.",
       });
     })();
   }, []);
