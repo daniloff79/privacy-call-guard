@@ -15,6 +15,7 @@ export default function Index() {
   const { log, clearLog } = useCallLog();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
+  const [perms, setPerms] = useState<{ contacts: boolean; callLog: boolean }>({ contacts: true, callLog: true });
 
   useEffect(() => {
     let active = true;
