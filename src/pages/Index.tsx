@@ -40,29 +40,41 @@ export default function Index() {
     };
   }, []);
 
-  // Solicita permissões, isenção de bateria e atualiza contagem de contatos
+  // Fluxo de inicialização sequencial: permissões -> pausa -> bateria
   useEffect(() => {
     if (!isNative()) return;
     (async () => {
+      // FASE 1: solicita permissões e aguarda decisão do usuário
       let p = await checkRuntimePermissions();
       if (!p.contacts || !p.callLog || !p.phoneState) {
         await requestRuntimePermissions();
-        await new Promise((r) => setTimeout(r, 1500));
-        p = await checkRuntimePermissions();
+        // Poll até o usuário responder ao diálogo do sistema (máx ~45s)
+        const start = Date.now();
+        while (Date.now() - start < 45000) {
+          await new Promise((r) => setTimeout(r, 600));
+          p = await checkRuntimePermissions();
+          if (p.contacts && p.callLog && p.phoneState) break;
+          // Se concedeu ao menos um, dá mais um ciclo curto e segue
+          if (Date.now() - start > 8000 && (p.contacts || p.callLog || p.phoneState)) break;
+        }
       }
       setPerms(p);
 
+      if (p.contacts) {
+        const n = await getContactsCount();
+        setContactsCount(n);
+        toast.success(`Lista de contatos: ${n} números liberados.`);
+      }
+
+      // FASE 2: pausa para o usuário respirar antes da próxima tela do sistema
+      await new Promise((r) => setTimeout(r, 800));
+
+      // FASE 3: verifica/solicita isenção da otimização de bateria
       const status = await requestIgnoreBatteryOptimizations();
       if (status === "already_ignored") {
         toast.success("Otimização de bateria já desativada para o CallShield.");
       } else if (status === "requested") {
         toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
-      }
-
-      if (p.contacts) {
-        const n = await getContactsCount();
-        setContactsCount(n);
-        toast.success(`Lista de contatos salva: ${n} números liberados.`);
       }
     })();
   }, []);
