@@ -15,8 +15,9 @@ interface CallRolePlugin {
   getBlockedLog(): Promise<{ log: NativeLogEntry[] }>;
   clearBlockedLog(): Promise<void>;
   requestIgnoreBatteryOptimizations(): Promise<{ status: 'already_ignored' | 'requested' | 'unsupported' }>;
-  checkRuntimePermissions(): Promise<{ contacts: boolean; callLog: boolean }>;
+  checkRuntimePermissions(): Promise<{ contacts: boolean; callLog: boolean; phoneState: boolean }>;
   requestRuntimePermissions(): Promise<{ status: 'requested' }>;
+  getContactsCount(): Promise<{ count: number; hasPermission: boolean }>;
 }
 
 
