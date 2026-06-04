@@ -160,9 +160,12 @@ public class CallRolePlugin extends Plugin {
                 == PackageManager.PERMISSION_GRANTED;
         boolean callLog = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALL_LOG)
                 == PackageManager.PERMISSION_GRANTED;
+        boolean phoneState = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_PHONE_STATE)
+                == PackageManager.PERMISSION_GRANTED;
         JSObject ret = new JSObject();
         ret.put("contacts", contacts);
         ret.put("callLog", callLog);
+        ret.put("phoneState", phoneState);
         call.resolve(ret);
     }
 
@@ -176,7 +179,8 @@ public class CallRolePlugin extends Plugin {
             }
             String[] perms = new String[] {
                     Manifest.permission.READ_CONTACTS,
-                    Manifest.permission.READ_CALL_LOG
+                    Manifest.permission.READ_CALL_LOG,
+                    Manifest.permission.READ_PHONE_STATE
             };
             ActivityCompat.requestPermissions(activity, perms, 7421);
             JSObject ret = new JSObject();
@@ -185,5 +189,35 @@ public class CallRolePlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Falha ao solicitar permissões: " + e.getMessage());
         }
+    }
+
+    @PluginMethod
+    public void getContactsCount(PluginCall call) {
+        JSObject ret = new JSObject();
+        Context ctx = getContext();
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            ret.put("count", 0);
+            ret.put("hasPermission", false);
+            call.resolve(ret);
+            return;
+        }
+        Cursor cursor = null;
+        int count = 0;
+        try {
+            ContentResolver cr = ctx.getContentResolver();
+            cursor = cr.query(
+                    ContactsContract.Contacts.CONTENT_URI,
+                    new String[]{ContactsContract.Contacts._ID},
+                    ContactsContract.Contacts.HAS_PHONE_NUMBER + " = 1",
+                    null, null);
+            if (cursor != null) count = cursor.getCount();
+        } catch (Exception ignored) {
+        } finally {
+            if (cursor != null) try { cursor.close(); } catch (Exception ignored) {}
+        }
+        ret.put("count", count);
+        ret.put("hasPermission", true);
+        call.resolve(ret);
     }
 }
