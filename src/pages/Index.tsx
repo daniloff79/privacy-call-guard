@@ -1,21 +1,29 @@
 import { useEffect, useState } from "react";
-import { Plus, ShieldCheck, PhoneOff, Activity, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Users, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
 import iconSvg from "@/assets/icon.svg";
-import { useBlockingRules } from "@/hooks/useBlockingRules";
 import { useCallLog } from "@/hooks/useCallLog";
-import { abrirEscolhaAppBloqueio, isAppPadraoBloqueio, isNative, requestIgnoreBatteryOptimizations, checkRuntimePermissions, requestRuntimePermissions } from "@/plugins/CallRolePlugin";
+import {
+  abrirEscolhaAppBloqueio,
+  isAppPadraoBloqueio,
+  isNative,
+  requestIgnoreBatteryOptimizations,
+  checkRuntimePermissions,
+  requestRuntimePermissions,
+  getContactsCount,
+} from "@/plugins/CallRolePlugin";
 import { toast } from "sonner";
-import RuleItem from "@/components/RuleItem";
-import AddRuleDialog from "@/components/AddRuleDialog";
 import CallLogSection from "@/components/CallLogSection";
 import { Button } from "@/components/ui/button";
 
 export default function Index() {
-  const { rules, addRule, toggleRule, deleteRule } = useBlockingRules();
   const { log, clearLog } = useCallLog();
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
-  const [perms, setPerms] = useState<{ contacts: boolean; callLog: boolean }>({ contacts: true, callLog: true });
+  const [perms, setPerms] = useState<{ contacts: boolean; callLog: boolean; phoneState: boolean }>({
+    contacts: true,
+    callLog: true,
+    phoneState: true,
+  });
+  const [contactsCount, setContactsCount] = useState<number>(0);
 
   useEffect(() => {
     let active = true;
@@ -31,36 +39,46 @@ export default function Index() {
     };
   }, []);
 
-  // Solicita permissões, isenção de bateria e confirma whitelist de contatos
+  // Solicita permissões, isenção de bateria e atualiza contagem de contatos
   useEffect(() => {
     if (!isNative()) return;
     (async () => {
-      // 1) Permissões em tempo de execução
       let p = await checkRuntimePermissions();
-      if (!p.contacts || !p.callLog) {
+      if (!p.contacts || !p.callLog || !p.phoneState) {
         await requestRuntimePermissions();
-        // pequena espera para o usuário responder o diálogo
         await new Promise((r) => setTimeout(r, 1500));
         p = await checkRuntimePermissions();
       }
       setPerms(p);
 
-      // 2) Isenção de bateria
       const status = await requestIgnoreBatteryOptimizations();
-      if (status === 'already_ignored') {
+      if (status === "already_ignored") {
         toast.success("Otimização de bateria já desativada para o CallShield.");
-      } else if (status === 'requested') {
+      } else if (status === "requested") {
         toast.info("Aprove a isenção de bateria para manter o bloqueio ativo.");
       }
 
-      toast.success("Lista de contatos salva como whitelist.", {
-        description: "Apenas contatos e números de utilidade pública poderão ligar.",
-      });
+      if (p.contacts) {
+        const n = await getContactsCount();
+        setContactsCount(n);
+        toast.success(`Lista de contatos salva: ${n} números liberados.`);
+      }
     })();
   }, []);
 
-  const activeCount = rules.filter((r) => r.enabled).length;
-  const wildcardCount = rules.filter((r) => r.pattern.includes("*")).length;
+  // Atualiza contagem se permissão for concedida depois
+  useEffect(() => {
+    if (perms.contacts) {
+      getContactsCount().then(setContactsCount);
+    }
+  }, [perms.contacts]);
+
+  const missingPerms = !perms.contacts || !perms.callLog || !perms.phoneState;
+  const missingList = [
+    !perms.contacts && "Contatos",
+    !perms.callLog && "Registro de Chamadas",
+    !perms.phoneState && "Estado do Telefone",
+  ].filter(Boolean).join(", ");
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,15 +93,15 @@ export default function Index() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
+      <main className="mx-auto max-w-2xl px-4 py-6 pb-12">
         {/* Aviso de permissões */}
-        {isNative() && (!perms.contacts || !perms.callLog) && (
+        {isNative() && missingPerms && (
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
             <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-500" />
             <div className="flex-1">
               <p className="text-sm font-medium text-card-foreground">Permissões necessárias</p>
               <p className="text-xs text-muted-foreground">
-                Sem acesso a {!perms.contacts && "Contatos"}{!perms.contacts && !perms.callLog && " e "}{!perms.callLog && "Registro de Chamadas"} o bloqueio pode não funcionar corretamente.
+                Sem acesso a {missingList} o bloqueio pode não funcionar corretamente.
               </p>
               <Button
                 size="sm"
@@ -108,7 +126,7 @@ export default function Index() {
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                 <div>
                   <p className="text-sm font-medium text-card-foreground">CallShield é o app de bloqueio padrão</p>
-                  <p className="text-xs text-muted-foreground">Toque ao lado para trocar o app responsável.</p>
+                  <p className="text-xs text-muted-foreground">Toque no botão seguinte para trocar o app responsável.</p>
                 </div>
               </>
             ) : (
@@ -141,46 +159,23 @@ export default function Index() {
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
-          <StatCard icon={<PhoneOff className="h-4 w-4" />} value={rules.length} label="Regras" />
-          <StatCard icon={<ShieldCheck className="h-4 w-4" />} value={activeCount} label="Ativas" />
-          <StatCard icon={<Activity className="h-4 w-4" />} value={wildcardCount} label="Wildcards" />
-        </div>
-
-        {/* Rule list */}
-        {rules.length > 0 && (
-          <div className="space-y-3">
-            {rules.map((rule) => (
-              <RuleItem key={rule.id} rule={rule} onToggle={toggleRule} onDelete={deleteRule} />
-            ))}
+        {/* Contatos liberados */}
+        <div className="mb-6 flex items-center gap-4 rounded-xl border bg-card p-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
+            <Users className="h-6 w-6 text-emerald-500" />
           </div>
-        )}
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">Contatos liberados</p>
+            <p className="text-2xl font-bold text-card-foreground">{contactsCount}</p>
+            <p className="text-xs text-muted-foreground">
+              Números da sua agenda que poderão ligar normalmente.
+            </p>
+          </div>
+        </div>
 
         {/* Call Log */}
         <CallLogSection log={log} onClear={clearLog} />
       </main>
-
-      {/* FAB */}
-      <Button
-        size="icon"
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-        onClick={() => setDialogOpen(true)}
-        aria-label="Adicionar regra"
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
-
-      <AddRuleDialog open={dialogOpen} onOpenChange={setDialogOpen} onAdd={addRule} />
-    </div>
-  );
-}
-
-function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  return (
-    <div className="rounded-xl border bg-card p-4 text-center">
-      <div className="mb-1 flex items-center justify-center gap-1.5 text-muted-foreground">{icon}<span className="text-xs">{label}</span></div>
-      <p className="text-2xl font-bold text-card-foreground">{value}</p>
     </div>
   );
 }
