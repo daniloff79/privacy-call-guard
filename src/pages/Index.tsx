@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Users, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Users, ListChecks, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import publicWhitelist from "@/data/public_whitelist.json";
 import iconSvg from "@/assets/icon.svg";
 import { useCallLog } from "@/hooks/useCallLog";
 import {
@@ -88,7 +89,7 @@ export default function Index() {
           <img src={iconSvg} alt="CallShield" className="h-10 w-10 rounded-xl" />
           <div>
             <h1 className="text-lg font-bold text-card-foreground">CallShield</h1>
-            <p className="text-sm text-muted-foreground">Bloqueio de chamadas com privacidade</p>
+            <p className="text-sm text-muted-foreground">Bloqueio de chamadas fora da agenda</p>
           </div>
         </div>
       </header>
@@ -159,17 +160,28 @@ export default function Index() {
           </Button>
         </div>
 
-        {/* Contatos liberados */}
-        <div className="mb-6 flex items-center gap-4 rounded-xl border bg-card p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
-            <Users className="h-6 w-6 text-emerald-500" />
+        {/* Contatos liberados + Whitelist pública */}
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <div className="flex items-center gap-4 rounded-xl border bg-card p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
+              <Users className="h-6 w-6 text-emerald-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Contatos liberados</p>
+              <p className="text-2xl font-bold text-card-foreground">{contactsCount}</p>
+              <p className="text-xs text-muted-foreground">Números da sua agenda.</p>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">Contatos liberados</p>
-            <p className="text-2xl font-bold text-card-foreground">{contactsCount}</p>
-            <p className="text-xs text-muted-foreground">
-              Números da sua agenda que poderão ligar normalmente.
-            </p>
+
+          <div className="flex items-center gap-4 rounded-xl border bg-card p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10">
+              <ListChecks className="h-6 w-6 text-sky-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">Whitelist pública</p>
+              <p className="text-2xl font-bold text-card-foreground">{publicWhitelist.numbers?.length ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Números de utilidade pública.</p>
+            </div>
           </div>
         </div>
 
