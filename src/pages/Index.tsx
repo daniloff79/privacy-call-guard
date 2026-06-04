@@ -89,7 +89,7 @@ export default function Index() {
           <img src={iconSvg} alt="CallShield" className="h-10 w-10 rounded-xl" />
           <div>
             <h1 className="text-lg font-bold text-card-foreground">CallShield</h1>
-            <p className="text-sm text-muted-foreground">Bloqueio de chamadas com privacidade</p>
+            <p className="text-sm text-muted-foreground">Bloqueio de chamadas fora da agenda</p>
           </div>
         </div>
       </header>
