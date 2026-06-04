@@ -82,12 +82,12 @@ export const requestIgnoreBatteryOptimizations = async (): Promise<string> => {
   }
 };
 
-export const checkRuntimePermissions = async (): Promise<{ contacts: boolean; callLog: boolean }> => {
-  if (!isNative()) return { contacts: true, callLog: true };
+export const checkRuntimePermissions = async (): Promise<{ contacts: boolean; callLog: boolean; phoneState: boolean }> => {
+  if (!isNative()) return { contacts: true, callLog: true, phoneState: true };
   try {
     return await CallRole.checkRuntimePermissions();
   } catch {
-    return { contacts: false, callLog: false };
+    return { contacts: false, callLog: false, phoneState: false };
   }
 };
 
@@ -96,4 +96,14 @@ export const requestRuntimePermissions = async (): Promise<void> => {
   try {
     await CallRole.requestRuntimePermissions();
   } catch {}
+};
+
+export const getContactsCount = async (): Promise<number> => {
+  if (!isNative()) return 0;
+  try {
+    const { count } = await CallRole.getContactsCount();
+    return count || 0;
+  } catch {
+    return 0;
+  }
 };
