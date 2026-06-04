@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ShieldCheck, Users, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ShieldCheck, Users, ListChecks, Settings as SettingsIcon, CheckCircle2, AlertTriangle } from "lucide-react";
+import publicWhitelist from "../../android/app/src/main/assets/public_whitelist.json";
 import iconSvg from "@/assets/icon.svg";
 import { useCallLog } from "@/hooks/useCallLog";
 import {
